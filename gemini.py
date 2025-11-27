@@ -202,6 +202,7 @@ def get_jwt_for_account(account: dict, proxy: str) -> str:
 
     data = json.loads(text)
     key_id = data["keyId"]
+    print(f"账号: {account.get('csesidx')} 账号可用! key_id: {key_id}")
     xsrf_token = data["xsrfToken"]
 
     key_bytes = decode_xsrf_token(xsrf_token)
@@ -262,6 +263,8 @@ def create_chat_session(jwt: str, team_id: str, proxy: str) -> str:
     )
 
     if resp.status_code != 200:
+        if resp.status_code == 401:
+            print(f"账号: {account.get('csesidx')} 一般情况下都是team_id填错了～")
         raise Exception(f"创建会话失败: {resp.status_code}")
 
     data = resp.json()
@@ -411,6 +414,8 @@ def chat_completions():
         for _ in range(max_retries):
             try:
                 account_idx, account = account_manager.get_next_account()
+                csesidx = account.get("csesidx", "unknown")
+                print(f"[调度] 当前使用账号CSESIDX: {csesidx}")
                 session, jwt, team_id = ensure_session_for_account(account_idx, account)
                 proxy = account_manager.config.get("proxy")
                 
